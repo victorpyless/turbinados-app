@@ -1,9 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { X, Car, FileText, ExternalLink, Save, Link as LinkIcon, Flame, Loader2 } from "lucide-react";
+import { X, Car, FileText, ExternalLink, Save, Link as LinkIcon, Flame, Loader2, Sparkles, Copy, Check } from "lucide-react";
 import { Project } from "@/types/project";
 import { supabase } from "@/lib/supabase";
+import { generateIdeas, BrainstormData } from "@/app/actions/brainstorm";
 import { useState, useEffect } from "react";
 
 interface ProjectDrawerProps {
@@ -19,12 +20,45 @@ export default function ProjectDrawer({ project, isOpen, onClose, onSave }: Proj
     const [priority, setPriority] = useState(project?.priority || false);
     const [isSavingPriority, setIsSavingPriority] = useState(false);
 
+    // Brainstorm AI Logic
+    const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
+    const [aiIdeas, setAiIdeas] = useState<BrainstormData | null>(null); // Updated Type
+    const [copiedIndex, setCopiedIndex] = useState<{ type: 'title' | 'prompt', index: number } | null>(null);
+
+    const handleGenerateIdeas = async () => {
+        if (!project?.carModel) return;
+        setIsGeneratingIdeas(true);
+        setAiIdeas(null); // Reset previous ideas
+
+        try {
+            const result = await generateIdeas(project.carModel);
+
+            if (result.success && result.data) {
+                setAiIdeas(result.data);
+            } else {
+                alert(result.error || "Erro desconhecido ao gerar ideias.");
+            }
+        } catch (err) {
+            console.error("Frontend Error:", err);
+            alert("Erro crítico ao conectar com o servidor.");
+        } finally {
+            setIsGeneratingIdeas(false);
+        }
+    };
+
+    const copyToClipboard = (text: string, type: 'title' | 'prompt', index: number) => {
+        navigator.clipboard.writeText(text);
+        setCopiedIndex({ type, index });
+        setTimeout(() => setCopiedIndex(null), 2000);
+    };
+
     // Reset state when project changes
     useEffect(() => {
         if (project) {
             setNotes(project.notes || "");
             setDriveLink(project.driveLink || "");
             setPriority(project.priority || false);
+            setAiIdeas(null); // Reset AI ideas when changing project
         }
     }, [project]);
 
@@ -133,15 +167,79 @@ export default function ProjectDrawer({ project, isOpen, onClose, onSave }: Proj
                             <Car size={16} />
                             <h3 className="text-xs font-mono font-bold uppercase tracking-widest text-white/40">Dados do Veículo</h3>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-white/5 p-4 rounded-sm border border-white/5">
-                                <span className="text-[10px] text-white/40 uppercase font-mono block mb-1">Modelo</span>
-                                <div className="text-sm font-bold text-white uppercase">{project.carModel}</div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest flex items-center justify-between">
+                                Veículo / Modelo
+                                <button
+                                    onClick={handleGenerateIdeas}
+                                    disabled={isGeneratingIdeas || !project.carModel}
+                                    className="flex items-center gap-1 text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-1 rounded hover:bg-indigo-500/20 transition-colors disabled:opacity-50"
+                                >
+                                    {isGeneratingIdeas ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                                    {isGeneratingIdeas ? "🧠 Pensando..." : "Brainstorm IA"}
+                                </button>
+                            </label>
+                            <div className="relative group">
+                                <Car className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 group-focus-within:text-white transition-colors" size={16} />
+                                <input
+                                    type="text"
+                                    value={project.carModel}
+                                    onChange={(e) => onSave({ carModel: e.target.value })}
+                                    className="w-full bg-neutral-900 border border-neutral-800 rounded p-2 pl-10 text-sm text-white focus:border-turbinados-red focus:outline-none transition-all placeholder-neutral-600 font-mono"
+                                    placeholder="Ex: Porsche 911 GT3 RS"
+                                />
                             </div>
-                            <div className="bg-white/5 p-4 rounded-sm border border-white/5">
-                                <span className="text-[10px] text-white/40 uppercase font-mono block mb-1">Data</span>
-                                <div className="text-sm font-bold text-white uppercase">{project.date}</div>
-                            </div>
+
+                            {/* AI Suggestions Area */}
+                            {aiIdeas && (
+                                <div className="mt-4 p-4 bg-neutral-900/50 border border-indigo-500/20 rounded-lg space-y-4 animate-in fade-in slide-in-from-top-2">
+
+                                    {/* Titles */}
+                                    <div className="space-y-2">
+                                        <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                                            <Sparkles size={10} /> Sugestões de Títulos
+                                        </h4>
+                                        <ul className="space-y-2">
+                                            {aiIdeas.titles.map((title, idx) => (
+                                                <li key={idx} className="group flex items-center gap-2 p-2 bg-black/40 rounded border border-neutral-800 hover:border-indigo-500/30 transition-colors">
+                                                    <span className="text-xs text-neutral-300 flex-1 font-medium">{title}</span>
+                                                    <button
+                                                        onClick={() => copyToClipboard(title, 'title', idx)}
+                                                        className="text-neutral-500 hover:text-white transition-colors p-1"
+                                                        title="Copiar title"
+                                                    >
+                                                        {copiedIndex?.type === 'title' && copiedIndex.index === idx ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+
+                                    {/* Prompts */}
+                                    <div className="space-y-2">
+                                        <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                                            <Sparkles size={10} /> Prompts de Thumbnail (Midjourney)
+                                        </h4>
+                                        <ul className="space-y-2">
+                                            {aiIdeas.prompts.map((prompt, idx) => (
+                                                <li key={idx} className="group flex flex-col gap-2 p-2 bg-black/40 rounded border border-neutral-800 hover:border-indigo-500/30 transition-colors">
+                                                    <span className="text-[10px] text-neutral-400 font-mono leading-relaxed">{prompt}</span>
+                                                    <div className="flex justify-end">
+                                                        <button
+                                                            onClick={() => copyToClipboard(prompt, 'prompt', idx)}
+                                                            className="text-neutral-500 hover:text-white transition-colors p-1 flex items-center gap-1 text-[10px]"
+                                                        >
+                                                            {copiedIndex?.type === 'prompt' && copiedIndex.index === idx ? <Check size={10} className="text-green-500" /> : <Copy size={10} />}
+                                                            Copiar
+                                                        </button>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </section>
 

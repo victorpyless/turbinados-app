@@ -1,28 +1,67 @@
-ATUE COMO: Um Time de Desenvolvimento de Elite (Sillicon Valley Standard) focado em criar aplicações web "World Class" com velocidade extrema.
+# TURBINADOS - ENGINEERING GUIDELINES & CONTEXT
+> "Excellence is not an act, but a habit."
 
-ATIVE AS SEGUINTES 3 SKILLS MANDATÓRIAS EM CADA RESPOSTA:
-
-### 1. 🧠 O ESTRATEGISTA (Product Manager)
-* **Filosofia:** "Menos cliques, mais valor."
-* **Regra:** Antes de codar, questione a utilidade. O usuário final é um editor de vídeo ocupado. Elimine passos desnecessários.
-* **Contexto:** Estamos criando o Workflow do Canal Turbinados. O ambiente é dinâmico. A UI deve ser óbvia.
-* **Ação:** Se o usuário pedir algo complexo, simplifique para o essencial (MVP) primeiro, mas com polimento final.
-
-### 2. 🎨 O VISIONÁRIO (Lead UI/UX Designer)
-* **Estilo Visual:** "Dark Garage Premium".
-    * **Cores:** Fundo Profundo (#050505 a #111), Acentos em Vermelho Neon (Alerta/Ação) e Azul Metálico (Info).
-    * **Estética:** Glassmorphism (vidro fosco), bordas metálicas finas (1px), tipografia técnica (Inter + JetBrains Mono).
-* **Interação:** Tudo deve ter feedback. Hover effects, transições suaves (framer-motion), loaders animados. Nada deve parecer estático ou travado.
-* **Componentes:** Nunca use HTML puro cru. Crie componentes React reutilizáveis e bonitos.
-
-### 3. 🛡️ O ENGENHEIRO SÊNIOR (Full-Cycle Dev)
-* **Stack:** Next.js 14 (App Router), Tailwind CSS, Lucide React (Ícones), Supabase (se necessário).
-* **Qualidade:**
-    * **Zero Bugs:** Use TypeScript estrito. Valide props.
-    * **Robustez:** Use `try/catch` em todas as funções assíncronas. Nunca deixe o app quebrar silenciosamente.
-    * **Clean Code:** Variáveis com nomes semânticos (ex: `isUploading` em vez de `loading`).
-* **Auto-Correção:** Antes de entregar o código, revise se ele realmente funciona no navegador. Se houver risco de erro, adicione um fallback visual.
+## 1. PROJECT ARCHITECTURE & TECH STACK
+* **Framework:** Next.js 14 (App Router)
+* **Language:** TypeScript (Strict Mode enabled)
+* **Database & Auth:** Supabase (PostgreSQL + Auth Helpers via `@supabase/ssr`)
+* **Styling:** Tailwind CSS (Utility-first + `tailwind-merge` for component classes)
+* **AI Integration:** Google Gemini API (`@google/generative-ai`) via Server Actions
 
 ---
-**COMANDO DE INICIALIZAÇÃO:**
-Sempre que eu pedir uma feature, processe internamente nessas 3 etapas (Estratégia -> Design -> Código) e me entregue a solução pronta para produção.
+
+## 2. CODING STANDARDS (STRICT)
+
+### 2.1. TypeScript & Type Safety
+* **No `any` Policy:** Never use `any`. Use `unknown` with type narrowing if necessary.
+* **Interfaces over Types:** Use `interface` for object definitions (better error messages/extensibility).
+* **Zod Validation:** All Server Actions must validate inputs using Zod before processing.
+* **Strong Typing:** All props, state, and API responses must be strictly typed.
+
+### 2.2. Next.js App Router Paradigms
+* **Server Components by Default:** Keep components as Server Components (RSC) unless interactivity (hooks like `useState`, `onClick`) is strictly needed.
+* **Server Actions for Mutations:** Do not use API Routes (`pages/api`). Use Server Actions (`'use server'`) for form submissions and data mutations.
+* **"Use Client" Boundaries:** Push Client Components as far down the tree as possible (Leaf Components) to preserve server rendering benefits.
+
+### 2.3. Data Fetching & State
+* **Fetch on Server:** Fetch data directly in Server Components (async/await) to reduce waterfall requests.
+* **No Global State Overkill:** Avoid Redux/Zustand unless absolutely necessary. Prefer URL State (Query Params) for filters and search (e.g., `?search=opala&status=urgent`).
+
+---
+
+## 3. UI/UX DESIGN SYSTEM (TURBINADOS THEME)
+
+### 3.1. Visual Language
+* **Dark Mode Only:** The app is strictly dark-themed (`bg-zinc-950` or `bg-black`).
+* **Accent Color:** "Turbinados Red" (`#EF4444` / `text-red-500` / `bg-red-600`).
+* **Typography:** Sans-serif, bold headers, uppercase for statuses.
+
+### 3.2. Component Patterns
+* **Loading States:** Always use Skeleton Loaders (`animate-pulse`) instead of spinners or blank screens.
+* **Feedback:** Use Toast notifications (Success/Error) for all user actions.
+* **Glassmorphism:** Use subtle transparency for cards (`bg-zinc-900/50 backdrop-blur-md`).
+
+---
+
+## 4. SECURITY & PERFORMANCE PROTOCOLS
+
+### 4.1. Authentication (Supabase)
+* **Middleware Protection:** All private routes (`/dashboard`) must be protected by Next.js Middleware checking Supabase Session.
+* **Row Level Security (RLS):** Never rely solely on frontend logic. Ensure RLS policies are active on the database.
+
+### 4.2. Performance
+* **Image Optimization:** Always use `<Image />` from `next/image` with `sizes` prop defined.
+* **Code Splitting:** Lazy load heavy components (like Modals or Charts) using `next/dynamic`.
+
+---
+
+## 5. WORKFLOW RULES FOR THE AGENT
+1.  **Thinking Process:** Before writing code, analyze the file structure and potential side effects.
+2.  **Error Handling:** Always implement `try/catch` blocks in Server Actions and provide user-friendly error messages.
+3.  **Refactoring:** If you see "dirty code" or hardcoded strings, suggest a cleanup immediately.
+4.  **DRY (Don't Repeat Yourself):** Extract reusable logic into `@/lib` or custom hooks.
+
+## 6. CURRENT MODULES
+* **Kanban Board:** Drag & Drop interface for video production.
+* **Brainstorm AI:** Gemini integration for generating titles/thumbnails.
+* **Auth System:** Email/Password login with secure session management.
