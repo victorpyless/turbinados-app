@@ -5,13 +5,16 @@ import dynamic from "next/dynamic";
 import KanbanBoard from "@/components/KanbanBoard";
 // import NewProjectModal from "@/components/NewProjectModal"; // Lazy loaded below
 import Toast from "@/components/Toast";
-import { Plus, Search, Flame } from "lucide-react";
+import { Plus, Search, Flame, LogOut } from "lucide-react";
 import { Project } from "@/types/project";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 const NewProjectModal = dynamic(() => import("@/components/NewProjectModal"), { ssr: false });
 
 export default function Home() {
+  const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: "" });
@@ -19,6 +22,22 @@ export default function Home() {
   // Visionary: Search & Filter State
   const [searchTerm, setSearchTerm] = useState("");
   const [onlyPriority, setOnlyPriority] = useState(false);
+
+  // Engineer: Auth Protection
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/");
+      }
+    };
+    checkSession();
+  }, [router]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/");
+  };
 
   const handleSaveProject = async (data: { title: string; carModel: string; date: string; priority: boolean; imageFile: File | null }) => {
     let uploadedImageUrl = "";
@@ -134,8 +153,8 @@ export default function Home() {
           <button
             onClick={() => setOnlyPriority(!onlyPriority)}
             className={`p-1.5 rounded-full border transition-all ${onlyPriority
-                ? 'bg-turbinados-red/20 border-turbinados-red text-turbinados-red shadow-[0_0_10px_rgba(220,38,38,0.5)]'
-                : 'bg-transparent border-white/10 text-white/20 hover:text-white'
+              ? 'bg-turbinados-red/20 border-turbinados-red text-turbinados-red shadow-[0_0_10px_rgba(220,38,38,0.5)]'
+              : 'bg-transparent border-white/10 text-white/20 hover:text-white'
               }`}
             title="Filtrar Prioridade Alta"
           >
@@ -151,8 +170,17 @@ export default function Home() {
             Novo Projeto
           </button>
 
-          <div className="w-8 h-8 bg-neutral-800 rounded-full border border-neutral-700 flex items-center justify-center text-xs text-white font-mono">
-            AD
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-neutral-800 rounded-full border border-neutral-700 flex items-center justify-center text-xs text-white font-mono">
+              AD
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-neutral-500 hover:text-white transition-colors"
+              title="Sair"
+            >
+              <LogOut size={16} />
+            </button>
           </div>
         </div>
       </header>
