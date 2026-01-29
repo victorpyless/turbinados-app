@@ -1,101 +1,122 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { Lock, Mail, ChevronRight, Zap } from "lucide-react";
 import Image from "next/image";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+export default function Login() {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    const handleLogin = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+
+        // Simulate Auth Check (Engineer)
+        setTimeout(() => {
+            document.cookie = "turbinados_auth=true; path=/";
+            router.push("/dashboard");
+        }, 1500);
+    };
+
+    return (
+        <main className="relative min-h-screen w-full bg-black flex items-center justify-center overflow-hidden">
+            {/* Background (Visionary: Dark Studio Car) */}
+            <div className="absolute inset-0 z-0">
+                {/* Placeholder for Car Image - using a dark abstract placeholder for now that fits the vibe */}
+                <Image
+                    src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=2600&auto=format&fit=crop"
+                    alt="Garage Background"
+                    fill
+                    className="object-cover opacity-60"
+                    priority
+                />
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-[2px]" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+            </div>
+
+            {/* Login Card (Visionary: Glassmorphism) */}
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="relative z-10 w-full max-w-md p-8 sm:p-10"
+            >
+                <div className="absolute inset-0 bg-white/5 backdrop-blur-xl rounded-sm border border-white/10 shadow-2xl" />
+
+                <div className="relative z-20 space-y-8">
+                    {/* Header */}
+                    <div className="text-center space-y-2">
+                        <div className="flex justify-center mb-6">
+                            <div className="w-12 h-12 bg-turbinados-red rounded-full flex items-center justify-center shadow-[0_0_25px_rgba(255,59,48,0.5)] animate-pulse">
+                                <Zap className="text-white fill-white" size={24} />
+                            </div>
+                        </div>
+                        <h1 className="text-3xl font-bold text-white tracking-tight">TURBINADOS</h1>
+                        <p className="text-sm font-mono text-white/40 uppercase tracking-widest">Gateway Access v1.0</p>
+                    </div>
+
+                    {/* Form */}
+                    <form onSubmit={handleLogin} className="space-y-6">
+
+                        {/* Email (Terminal Style) */}
+                        <div className="space-y-1 group">
+                            <label className="text-xs font-mono text-white/40 uppercase tracking-widest group-focus-within:text-turbinados-red transition-colors flex items-center gap-2">
+                                <Mail size={12} /> Email
+                            </label>
+                            <input
+                                type="email"
+                                defaultValue="admin@turbinados.com.br"
+                                className="w-full bg-transparent border-b border-white/20 py-3 text-white placeholder-white/20 focus:border-turbinados-red focus:outline-none transition-all font-mono"
+                                placeholder="user@system.com"
+                            />
+                        </div>
+
+                        {/* Password (Terminal Style) */}
+                        <div className="space-y-1 group">
+                            <label className="text-xs font-mono text-white/40 uppercase tracking-widest group-focus-within:text-turbinados-red transition-colors flex items-center gap-2">
+                                <Lock size={12} /> Senha
+                            </label>
+                            <input
+                                type="password"
+                                defaultValue="123456"
+                                className="w-full bg-transparent border-b border-white/20 py-3 text-white placeholder-white/20 focus:border-turbinados-red focus:outline-none transition-all font-mono"
+                                placeholder="••••••••"
+                            />
+                        </div>
+
+                        {/* Strategist: Remember Me */}
+                        <div className="flex items-center gap-3">
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" defaultChecked className="sr-only peer" />
+                                <div className="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-turbinados-red"></div>
+                            </label>
+                            <span className="text-xs text-white/60">Manter conectado</span>
+                        </div>
+
+                        {/* Button (Xenon Effect) */}
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="group relative w-full py-4 bg-white text-black font-bold uppercase tracking-[0.2em] text-sm overflow-hidden rounded-sm transition-all hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <span className="relative z-10 flex items-center justify-center gap-2">
+                                {isLoading ? "Autenticando..." : "Acessar Sistema"}
+                                {!isLoading && <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />}
+                            </span>
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                        </button>
+
+                    </form>
+                </div>
+            </motion.div>
+
+            {/* Footer Info */}
+            <div className="absolute bottom-6 text-[10px] font-mono text-white/20 uppercase tracking-widest text-center w-full">
+                System Secured by Supabase • 2026
+            </div>
+        </main>
+    );
 }
