@@ -17,6 +17,15 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Turbinados App",
   description: "Workflow Management for Automotive Channel",
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Turbinados'
+  },
+  formatDetection: {
+    telephone: false
+  },
 };
 
 export default function RootLayout({
