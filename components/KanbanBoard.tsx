@@ -19,7 +19,6 @@ import { AnimatePresence } from "framer-motion";
 // import ProjectDrawer from "./ProjectDrawer";
 import { supabase } from "@/lib/supabase";
 import dynamic from "next/dynamic";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const ProjectDrawer = dynamic(() => import("./ProjectDrawer"), { ssr: false });
 
@@ -85,17 +84,6 @@ export default function KanbanBoard({ projects, setProjects, onDeleteProject, sh
     }, [projects, searchTerm, onlyPriority]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-
-    // Mobile Responsive State
-    const [isMobile, setIsMobile] = useState(false);
-    const [currentColumnIndex, setCurrentColumnIndex] = useState(0);
-
-    useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768);
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
 
     // Fetch Data on Load
     useEffect(() => {
@@ -201,57 +189,21 @@ export default function KanbanBoard({ projects, setProjects, onDeleteProject, sh
                     setActiveId(null);
                 }}
             >
-                <div className="h-[calc(100vh-80px)] p-6 bg-garage-dark">
-                    {isMobile ? (
-                        /* Mobile View */
-                        <div className="flex flex-col h-full gap-4">
-                            {/* Navigation Bar */}
-                            <div className="flex items-center justify-between bg-neutral-900/50 p-2 rounded-lg border border-neutral-800">
-                                <button
-                                    onClick={() => setCurrentColumnIndex((prev) => Math.max(0, prev - 1))}
-                                    disabled={currentColumnIndex === 0}
-                                    className="p-2 bg-neutral-800 rounded-full disabled:opacity-30 disabled:cursor-not-allowed hover:bg-turbinados-red/20 transition-colors"
-                                >
-                                    <ChevronLeft size={20} className="text-white" />
-                                </button>
-
-                                <div className="flex flex-col items-center">
-                                    <h2 className="font-bold text-white tracking-widest uppercase text-sm">
-                                        {columns[currentColumnIndex].toUpperCase()}
-                                    </h2>
-                                    {/* Dots Indicator */}
-                                    <div className="flex gap-1.5 mt-1">
-                                        {columns.map((_, idx) => (
-                                            <div
-                                                key={idx}
-                                                className={`w-1.5 h-1.5 rounded-full transition-colors ${idx === currentColumnIndex ? 'bg-turbinados-red' : 'bg-neutral-700'}`}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <button
-                                    onClick={() => setCurrentColumnIndex((prev) => Math.min(columns.length - 1, prev + 1))}
-                                    disabled={currentColumnIndex === columns.length - 1}
-                                    className="p-2 bg-neutral-800 rounded-full disabled:opacity-30 disabled:cursor-not-allowed hover:bg-turbinados-red/20 transition-colors"
-                                >
-                                    <ChevronRight size={20} className="text-white" />
-                                </button>
-                            </div>
-
-                            {/* Single Droppable Column */}
+                <div className="h-[calc(100vh-80px)] p-4 md:p-8 bg-garage-dark overflow-y-auto custom-scrollbar">
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 h-full">
+                        {columns.map((colId) => (
                             <DroppableColumn
-                                key={columns[currentColumnIndex]}
-                                id={columns[currentColumnIndex]}
-                                projectCount={filteredProjects.filter(p => p.status === columns[currentColumnIndex]).length}
+                                key={colId}
+                                id={colId}
+                                projectCount={filteredProjects.filter(p => p.status === colId).length}
                                 isLoading={isLoading}
                             >
                                 <SortableContext
-                                    items={filteredProjects.filter(p => p.status === columns[currentColumnIndex]).map(p => p.id)}
+                                    items={filteredProjects.filter(p => p.status === colId).map(p => p.id)}
                                     strategy={verticalListSortingStrategy}
                                 >
                                     {filteredProjects
-                                        .filter((p) => p.status === columns[currentColumnIndex])
+                                        .filter((p) => p.status === colId)
                                         .map((project) => (
                                             <SortableVideoCard
                                                 key={project.id}
@@ -263,37 +215,8 @@ export default function KanbanBoard({ projects, setProjects, onDeleteProject, sh
                                     }
                                 </SortableContext>
                             </DroppableColumn>
-                        </div>
-                    ) : (
-                        /* Desktop View */
-                        <div className="flex h-full overflow-x-auto gap-4 whitespace-nowrap">
-                            {columns.map((colId) => (
-                                <DroppableColumn
-                                    key={colId}
-                                    id={colId}
-                                    projectCount={filteredProjects.filter(p => p.status === colId).length}
-                                    isLoading={isLoading}
-                                >
-                                    <SortableContext
-                                        items={filteredProjects.filter(p => p.status === colId).map(p => p.id)}
-                                        strategy={verticalListSortingStrategy}
-                                    >
-                                        {filteredProjects
-                                            .filter((p) => p.status === colId)
-                                            .map((project) => (
-                                                <SortableVideoCard
-                                                    key={project.id}
-                                                    project={project}
-                                                    onSelect={(p) => setSelectedProject(p)}
-                                                    onDelete={onDeleteProject}
-                                                />
-                                            ))
-                                        }
-                                    </SortableContext>
-                                </DroppableColumn>
-                            ))}
-                        </div>
-                    )}
+                        ))}
+                    </div>
                 </div>
 
                 <DragOverlay dropAnimation={dropAnimation}>

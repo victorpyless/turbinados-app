@@ -5,7 +5,10 @@ import { X, Car, FileText, ExternalLink, Save, Link as LinkIcon, Flame, Loader2,
 import { Project } from "@/types/project";
 import { supabase } from "@/lib/supabase";
 import { generateIdeas, BrainstormData } from "@/app/actions/brainstorm";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { deleteProject } from "@/app/actions/projects";
+import { Camera, Trash } from "lucide-react";
 
 interface ProjectDrawerProps {
     project: Project | null;
@@ -15,10 +18,78 @@ interface ProjectDrawerProps {
 }
 
 export default function ProjectDrawer({ project, isOpen, onClose, onSave }: ProjectDrawerProps) {
+    // State
+    const router = useRouter();
     const [notes, setNotes] = useState(project?.notes || "");
     const [driveLink, setDriveLink] = useState(project?.driveLink || "");
     const [priority, setPriority] = useState(project?.priority || false);
     const [isSavingPriority, setIsSavingPriority] = useState(false);
+
+    // Upload & Delete State
+    const [isUploading, setIsUploading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Image Upload Handler
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0 || !project) return;
+
+        const file = e.target.files[0];
+        setIsUploading(true);
+
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${project.id}-${Math.random()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            // 1. Upload to Supabase Storage
+            const { error: uploadError } = await supabase.storage
+                .from('project-covers')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            // 2. Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('project-covers')
+                .getPublicUrl(filePath);
+
+            // 3. Update DB
+            const { error: dbError } = await supabase
+                .from('projects')
+                .update({ thumbnail_url: publicUrl })
+                .eq('id', project.id);
+
+            if (dbError) throw dbError;
+
+            // 4. Refresh & Notify
+            onSave({ thumbnailUrl: publicUrl }); // Optimistic / Parent update
+            router.refresh();
+
+        } catch (error) {
+            console.error("Upload error:", error);
+            alert("Erro ao enviar imagem.");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    // Delete Handler
+    const handleDelete = async () => {
+        if (!confirm("Tem certeza? Esta ação é irreversível 🚨")) return;
+        if (!project) return;
+
+        setIsDeleting(true);
+        const result = await deleteProject(project.id);
+
+        if (result.success) {
+            onClose();
+            router.refresh();
+        } else {
+            alert(result.error);
+            setIsDeleting(false);
+        }
+    };
 
     // Brainstorm AI Logic
     const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
@@ -58,7 +129,7 @@ export default function ProjectDrawer({ project, isOpen, onClose, onSave }: Proj
             setNotes(project.notes || "");
             setDriveLink(project.driveLink || "");
             setPriority(project.priority || false);
-            setAiIdeas(null); // Reset AI ideas when changing project
+            setAiIdeas(null); // Reset AI ideas
         }
     }, [project]);
 
@@ -66,6 +137,7 @@ export default function ProjectDrawer({ project, isOpen, onClose, onSave }: Proj
 
     const handleSave = () => {
         onSave({ notes, driveLink, priority });
+        router.refresh();
     };
 
     const handlePrioritySave = async (newPriority: boolean) => {
@@ -82,6 +154,7 @@ export default function ProjectDrawer({ project, isOpen, onClose, onSave }: Proj
         } else {
             // Update Parent UI immediately
             onSave({ priority: newPriority });
+            router.refresh();
         }
         setIsSavingPriority(false);
     };
@@ -102,10 +175,38 @@ export default function ProjectDrawer({ project, isOpen, onClose, onSave }: Proj
                 animate={{ x: isOpen ? 0 : "100%" }}
                 exit={{ x: "100%" }}
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                className="fixed top-0 right-0 z-50 h-full w-full max-w-md bg-black/95 backdrop-blur-md border-l border-white/10 shadow-2xl flex flex-col"
+                className="fixed top-0 right-0 z-50 h-full w-full sm:max-w-xl overflow-y-auto bg-black/95 backdrop-blur-md border-l border-white/10 shadow-2xl flex flex-col"
             >
                 <div className="p-6 border-b border-white/10 flex justify-between items-start bg-gradient-to-b from-white/5 to-transparent">
                     <div className="space-y-4">
+                        {/* Cover Image Upload Area */}
+                        <div
+                            onClick={() => fileInputRef.current?.click()}
+                            className="relative w-full h-32 bg-black/40 border-2 border-dashed border-white/10 rounded-md flex items-center justify-center cursor-pointer hover:border-white/30 transition-all overflow-hidden group"
+                        >
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                            />
+
+                            {project.thumbnailUrl ? (
+                                <>
+                                    <img src={project.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-all" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+                                </>
+                            ) : null}
+
+                            <div className="flex flex-col items-center gap-2 relative z-10 text-white/50 group-hover:text-white transition-colors">
+                                {isUploading ? <Loader2 className="animate-spin" /> : <Camera />}
+                                <span className="text-[10px] font-mono uppercase tracking-widest font-bold">
+                                    {isUploading ? "Enviando..." : (project.thumbnailUrl ? "Alterar Capa" : "Adicionar Capa")}
+                                </span>
+                            </div>
+                        </div>
+
                         <span className="px-2 py-1 bg-white/10 border border-white/10 text-[10px] font-mono uppercase tracking-wider text-white/80 rounded-sm">
                             ID: {project.id.substring(0, 8)}
                         </span>
@@ -302,9 +403,22 @@ export default function ProjectDrawer({ project, isOpen, onClose, onSave }: Proj
                         </div>
                     </section>
 
+
+
+
+
                 </div>
 
                 <div className="p-6 border-t border-white/10 bg-[#0f0f0f] flex gap-3">
+                    <button
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        className="p-3 bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all rounded-sm flex items-center justify-center"
+                        title="Deletar Projeto"
+                    >
+                        {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash size={16} />}
+                    </button>
+
                     <button
                         onClick={handleSave}
                         className="flex-1 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-turbinados-red hover:text-white transition-all rounded-sm flex items-center justify-center gap-2"
@@ -314,7 +428,7 @@ export default function ProjectDrawer({ project, isOpen, onClose, onSave }: Proj
                     </button>
                 </div>
 
-            </motion.div>
+            </motion.div >
         </>
     );
 }

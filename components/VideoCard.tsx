@@ -39,26 +39,27 @@ function VideoCardComponent({ project, onClick }: VideoCardProps) {
     return (
         <div
             onClick={onClick}
-            className={`relative group bg-zinc-900 border rounded-lg p-3 cursor-grab active:cursor-grabbing overflow-hidden transition-all ${priorityClass}`}
+            className={`relative group bg-zinc-900 border rounded-lg cursor-grab active:cursor-grabbing overflow-hidden transition-all flex flex-col ${priorityClass}`}
         >
 
             {/* Imagem de Fundo (Se existir) */}
-            {project.thumbnailUrl && (
-                <>
+            {/* Cover Image (Top) - If exists */}
+            {project.thumbnailUrl ? (
+                <div className="relative w-full h-32 rounded-t-sm overflow-hidden bg-black shrink-0">
                     <Image
                         src={project.thumbnailUrl}
                         alt={project.title}
                         fill
-                        className="object-cover opacity-40 group-hover:opacity-60 transition-opacity"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         quality={75}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-                </>
-            )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent opacity-80" />
+                </div>
+            ) : null}
 
             {/* Conteúdo do Card */}
-            <div className="relative z-10 flex flex-col gap-2">
+            <div className={`relative z-10 flex flex-col gap-2 ${project.thumbnailUrl ? "p-3 pt-0" : "p-3"}`}>
                 {/* Header: ID e Status */}
                 <div className="flex justify-between items-start">
                     <span className="text-[10px] text-zinc-500 font-mono">ID: {project.id.slice(0, 6)}</span>

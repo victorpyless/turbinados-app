@@ -35,7 +35,20 @@
 * **Dark Mode Only:** The app is strictly dark-themed (`bg-zinc-950` or `bg-black`).
 * **Accent Color:** "Turbinados Red" (`#EF4444` / `text-red-500` / `bg-red-600`).
 * **Typography:** Sans-serif, bold headers, uppercase for statuses.
-
+### 2.4. SUPABASE SERVER ACTIONS (CRITICAL)
+* **Cookie Context is King:** In Server Actions (`'use server'`), you MUST use the specific server client that handles cookies.
+    * ❌ WRONG: `import { createClient } from '@supabase/supabase-js'`
+    * ✅ RIGHT: `import { createClient } from '@/utils/supabase/server'`
+* **Session Validation Pattern:** Every protected action must start with this exact block:
+    ```typescript
+    const supabase = createClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) {
+      return { error: 'Unauthorized: Please log in again.' };
+    }
+    // Now use user.id safely
+    ```
+* **No "Guest" Mutations:** Never allow `INSERT`, `UPDATE`, or `DELETE` without a verified `user.id`.
 ### 3.2. Component Patterns
 * **Loading States:** Always use Skeleton Loaders (`animate-pulse`) instead of spinners or blank screens.
 * **Feedback:** Use Toast notifications (Success/Error) for all user actions.
